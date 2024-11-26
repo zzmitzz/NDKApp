@@ -1,12 +1,12 @@
 #include <jni.h>
 #include <string>
 #include <ctime>
-
+#include "process-image.h"
 
 // String conversion
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_example_ndkapp_MainActivity_calculateNthFibonacci(
-        JNIEnv* env, jobject /* this */, jlong input) {
+        JNIEnv *env, jobject /* this */, jlong input) {
     jlong result = 0;
     jlong a = 0L;
     jlong b = 1L;
@@ -22,7 +22,7 @@ Java_com_example_ndkapp_MainActivity_calculateNthFibonacci(
 
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_example_ndkapp_MainActivity_readNameObject(
-        JNIEnv* env,
+        JNIEnv *env,
         jobject /* this */,
         jobject personObject) {
     jclass userClass = env->GetObjectClass(personObject);
@@ -35,9 +35,28 @@ Java_com_example_ndkapp_MainActivity_readNameObject(
 //    std::string name(cName);
 //    env->ReleaseStringUTFChars(jName, cName);
 //    env->DeleteLocalRef(jName);
-    jint age =  env->GetIntField(personObject, ageField);
+    jint age = env->GetIntField(personObject, ageField);
 
-    env ->DeleteLocalRef(userClass);
-    return jName ;
+    env->DeleteLocalRef(userClass);
+    return jName;
 }
 
+extern "C"
+JNIEXPORT jbyteArray JNICALL
+Java_com_example_ndkapp_MainActivity_processImage(JNIEnv *env, jobject obj, jbyteArray yuv_data, jint width, jint height) {
+    jsize len = env->GetArrayLength(yuv_data);
+    jbyte *input = env->GetByteArrayElements(yuv_data, nullptr);
+
+    // Create output array of same size
+    jbyteArray output = env->NewByteArray(len);
+    jbyte *outputPtr = env->GetByteArrayElements(output, nullptr);
+
+    processImage(input,outputPtr,width,height);
+
+    // Finalize
+    env->SetByteArrayRegion(output, 0, len, outputPtr);
+    env->ReleaseByteArrayElements(yuv_data, input, JNI_ABORT);
+    env->ReleaseByteArrayElements(output, outputPtr, 0);
+
+    return output;
+}

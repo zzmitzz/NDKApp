@@ -6,40 +6,100 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <EditText
-        android:id="@+id/editText"
-        android:layout_width="80dp"
-        android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:inputType="number"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            >
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toTopOf="parent">
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+                    <TextView
+                        android:id="@+id/textView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="16dp"
+                        android:text="1. Fibonanci number: "
+                        android:textStyle="bold"
+                        app:layout_constraintStart_toStartOf="parent"
 
-    <Button
-        android:id="@+id/button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Submit"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="@+id/editText"
-        app:layout_constraintStart_toStartOf="@+id/editText"
-        app:layout_constraintTop_toBottomOf="@+id/editText" />
+                        app:layout_constraintTop_toTopOf="parent" />
 
-    <TextView
-        android:id="@+id/kotlin"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Kotlin time taken: "
-        app:layout_constraintEnd_toStartOf="@+id/button"
-        app:layout_constraintTop_toBottomOf="@+id/button" />
+                    <EditText
+                        android:id="@+id/editText"
+                        android:layout_width="80dp"
+                        android:layout_height="wrap_content"
+                        android:inputType="number"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/textView" />
 
-    <TextView
-        android:id="@+id/nativeTime"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Native time taken: "
-        app:layout_constraintStart_toEndOf="@+id/button"
-        app:layout_constraintTop_toBottomOf="@+id/button" />
+                    <Button
+                        android:id="@+id/button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Submit"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        app:layout_constraintEnd_toEndOf="@+id/editText"
+                        app:layout_constraintStart_toStartOf="@+id/editText"
+                        app:layout_constraintTop_toBottomOf="@+id/editText" />
+
+                    <TextView
+                        android:id="@+id/kotlin"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Kotlin time taken: "
+                        app:layout_constraintEnd_toStartOf="@+id/button"
+                        app:layout_constraintTop_toBottomOf="@+id/button" />
+
+                    <TextView
+                        android:id="@+id/nativeTime"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Native time taken: "
+                        app:layout_constraintStart_toEndOf="@+id/button"
+                        app:layout_constraintTop_toBottomOf="@+id/button" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </FrameLayout>
+            <FrameLayout
+                android:layout_margin="16dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:orientation="vertical"
+                    android:layout_height="wrap_content">
+                    <TextView
+                        android:textStyle="bold"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="2. Gray scale image"/>
+                    <Button
+                        android:id="@+id/submit_task2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Submit"
+                        android:layout_gravity="center"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                    <ImageView
+                        android:layout_width="300dp"
+                        android:layout_height="300dp"
+                        android:id="@+id/imageView"
+                        android:layout_gravity="center"/>
+                </LinearLayout>
+            </FrameLayout>
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+
 </androidx.constraintlayout.widget.ConstraintLayout>
