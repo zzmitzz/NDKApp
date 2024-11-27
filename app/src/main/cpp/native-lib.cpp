@@ -2,6 +2,7 @@
 #include <string>
 #include <ctime>
 #include "process-image.h"
+#include <android/log.h>
 
 // String conversion
 extern "C" JNIEXPORT jlong JNICALL
@@ -60,3 +61,49 @@ Java_com_example_ndkapp_MainActivity_processImage(JNIEnv *env, jobject obj, jbyt
 
     return output;
 }
+
+
+//extern "C" {
+//
+//JNIEXPORT jbyteArray JNICALL
+//Java_com_example_myapp_NativeLib_detectEdges(
+//        JNIEnv *env,
+//        jobject /* this */,
+//        jbyteArray inputArray,
+//        jint width,
+//        jint height,
+//        jdouble sigma,
+//        jdouble threshold1,
+//        jdouble threshold2
+//) {
+//    jbyte *inputBuffer = env->GetByteArrayElements(inputArray, nullptr);
+//
+//    // Convert byte array to Mat
+//    cv::Mat inputImage(height, width, CV_8UC1, (unsigned char *)inputBuffer);
+//    cv::Mat edges(height, width, CV_8UC1);
+//
+//    try {
+//        // Apply Gaussian blur if sigma > 0
+//        if (sigma > 0) {
+//            cv::GaussianBlur(inputImage, inputImage, cv::Size(0, 0), sigma);
+//        }
+//
+//        // Detect edges using Canny
+//        cv::Canny(inputImage, edges, threshold1, threshold2);
+//
+//        // Create output byte array
+//        jbyteArray resultArray = env->NewByteArray(width * height);
+//        env->SetByteArrayRegion(resultArray, 0, width * height, (jbyte *)edges.data);
+//
+//        // Release resources
+//        env->ReleaseByteArrayElements(inputArray, inputBuffer, 0);
+//
+//        return resultArray;
+//    } catch (const cv::Exception& e) {
+//        __android_log_print(ANDROID_LOG_ERROR, "EdgeDetection", "OpenCV error: %s", e.what());
+//        env->ReleaseByteArrayElements(inputArray, inputBuffer, 0);
+//        return nullptr;
+//    }
+//}
+//
+//} // extern "C"

@@ -8,14 +8,19 @@ import android.graphics.BitmapFactory
 import android.graphics.ImageFormat
 import android.graphics.Rect
 import android.graphics.YuvImage
+import android.media.AudioAttributes
+import android.media.MediaPlayer
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
+import android.provider.MediaStore.Audio.Media
 import android.util.Log
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.content.PackageManagerCompat
+import androidx.core.net.toUri
 import com.example.ndkapp.databinding.ActivityMainBinding
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -24,11 +29,23 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileNotFoundException
 import java.util.Objects
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+    private val mediaPlayer by lazy {
+        MediaPlayer().apply {
+            setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .build()
+            )
+        }
+    }
     private var scope =
         CoroutineScope(Dispatchers.Default) + CoroutineExceptionHandler { _, throwable ->
             run {
@@ -47,6 +64,7 @@ class MainActivity : AppCompatActivity() {
     private fun initView(){
         handleUC1()
         handleUC2()
+        handleUC3()
     }
 
     private fun handleUC1(){
@@ -100,6 +118,29 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    private fun handleUC3(){
+        binding.uploadAudio.setOnClickListener{
+            if(!checkPermissionGranted()){
+                requestPermissions(permissionRequire, 200)
+            }
+            else{
+                val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+                    type = "audio/*"
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                }
+                startActivityForResult(intent, PICK_AUDIO)
+            }
+        }
+        binding.playPause.setOnClickListener{
+
+            if(mediaPlayer.isPlaying){
+                mediaPlayer.pause()
+            }
+            else{
+                mediaPlayer.start()
+            }
+        }
+    }
 
     private fun calculateFibNth(n: Long): Long{
         var result = 0L
@@ -128,9 +169,8 @@ class MainActivity : AppCompatActivity() {
                             }
                             var bitmap: Bitmap = MediaStore.Images.Media.getBitmap(contentResolver, image)
                             val result = processImage(bitmapToByteArray(bitmap), bitmap.width, bitmap.height)
-
                             withContext(Dispatchers.Main){
-                                binding.imageView.setImageBitmap(getBitmapFromByteArray(result,bitmap.width, bitmap.height))
+                                binding.imageView.setImageBitmap(byteArrayToBitmapRaw(result,bitmap.width, bitmap.height, bitmap.config!!))
                             }
                             Log.d("MainActivity", "Native" + result.toString())
                             withContext(Dispatchers.Main) {
@@ -138,6 +178,19 @@ class MainActivity : AppCompatActivity() {
                                 binding.kotlin.text = "Success"
                             }
                         }
+                    }
+                }
+            }
+            PICK_AUDIO -> {
+                if (resultCode == RESULT_OK) {
+                    val audio = data?.data
+                    if (audio != null) {
+                        Log.d("MainActivity", audio.path.toString())
+                        mediaPlayer.setDataSource(this@MainActivity, "file://${audio.path}".toUri())
+                        mediaPlayer.setOnPreparedListener {
+                            mediaPlayer.start()
+                        }
+                        mediaPlayer.prepareAsync()
                     }
                 }
             }
@@ -151,35 +204,31 @@ class MainActivity : AppCompatActivity() {
         }
         return true
     }
-    private fun bitmapToByteArray(bitmap: Bitmap): ByteArray{
-        val stream = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
-        return stream.toByteArray()
+    fun bitmapToByteArray(bitmap: Bitmap): ByteArray {
+        val bytesPerPixel = when (bitmap.config) {
+            Bitmap.Config.ARGB_8888 -> 4
+            Bitmap.Config.RGB_565 -> 2
+            Bitmap.Config.ALPHA_8 -> 1
+            else -> throw IllegalArgumentException("Unsupported Bitmap.Config")
+        }
+        val bufferSize = bitmap.width * bitmap.height * bytesPerPixel
+        val byteArray = ByteArray(bufferSize)
+        val buffer = java.nio.ByteBuffer.wrap(byteArray)
+        bitmap.copyPixelsToBuffer(buffer)
+        return byteArray
     }
 
-    private fun getBitmapFromByteArray(byteArray: ByteArray,width: Int, height: Int): Bitmap {
-        Log.d("MainActivity", byteArray.joinToString { "" })
-        val yuvImage = YuvImage(
-            byteArray,
-            ImageFormat.NV21,  // or ImageFormat.YUV_420_SP
-            width,
-            height,
-            null
-        )
-
-        // Convert to JPEG
-        val out = ByteArrayOutputStream()
-        yuvImage.compressToJpeg(Rect(0, 0, width, height), 100, out)
-        val jpegBytes = out.toByteArray()
-
-        // Now we can safely decode to Bitmap
-        return BitmapFactory.decodeByteArray(jpegBytes, 0, jpegBytes.size)
+    private fun byteArrayToBitmapRaw(byteArray: ByteArray, width: Int, height: Int, config: Bitmap.Config): Bitmap {
+        val bitmap = Bitmap.createBitmap(width, height, config)
+        val buffer = java.nio.ByteBuffer.wrap(byteArray)
+        bitmap.copyPixelsFromBuffer(buffer)
+        return bitmap
     }
 
 
 
     private external fun calculateNthFibonacci(a: Long): Long
-    external fun processImage(image: ByteArray, width: Int, height: Int): ByteArray
+    private external fun processImage(image: ByteArray, width: Int, height: Int): ByteArray
     private external fun readNameObject(a: Person): String
 
 
@@ -191,13 +240,18 @@ class MainActivity : AppCompatActivity() {
         init {
             System.loadLibrary("ndkapp")
         }
+        const val PICK_AUDIO = 101
         const val PICK_IMAGE = 102
         val permissionRequire = listOf(
-            android.Manifest.permission.READ_EXTERNAL_STORAGE,
-            android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            android.Manifest.permission.READ_MEDIA_AUDIO
+            "android.permission.READ_EXTERNAL_STORAGE",
+            "android.permission.WRITE_EXTERNAL_STORAGE",
+            "android.permission.READ_MEDIA_AUDIO",
+            "android.permission.READ_MEDIA_IMAGES"
         ).toTypedArray()
     }
 
-
+    override fun onDestroy() {
+        super.onDestroy()
+        mediaPlayer.release()
+    }
 }

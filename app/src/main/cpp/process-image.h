@@ -1,21 +1,36 @@
 
 
-// Optional: If you need to handle different YUV formats or do additional processing
+#include <jni.h>
+#include <android/log.h>
+#define LOG_TAG "MyNativeCode"
+#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
+
+
+
 void processImage(const jbyte* input, jbyte* output, jint width, jint height) {
-    // YUV420 format already has grayscale in Y plane
-    // Just copy the Y plane if no additional processing is needed
-    memcpy(output, input, width * height);
+    const int bytesPerPixel = 3;
+    const int totalPixels = width * height;
+    const int totalBytes = totalPixels * bytesPerPixel;
 
-    for (int i = 0; i < width * height; i++) {
-        // Convert signed byte to unsigned
-        int pixel = input[i] & 0xFF;
+    for (int i = 0; i < totalPixels; i++) {
+        int inputIndex = i * bytesPerPixel;
 
-        // Apply contrast/brightness adjustments if needed
-         pixel = (pixel * 5) + 15;
+        // Read as unsigned bytes
+        uint8_t r = static_cast<uint8_t>(input[inputIndex] & 0xFF);
+        uint8_t g = static_cast<uint8_t>(input[inputIndex + 1] & 0xFF);
+        uint8_t b = static_cast<uint8_t>(input[inputIndex + 2] & 0xFF);
 
-        // Clamp to byte range
-        pixel = (pixel > 255) ? 255 : ((pixel < 0) ? 0 : pixel);
+        // Convert to grayscale
+        int gray = (int)(0.299f * r + 0.587f * g + 0.114f * b);
 
-        output[i] = input[i];
+//        // Apply contrast/brightness adjustments
+//        gray = (gray * 5) - 93;
+
+        // Clamp values
+        gray = std::min(255, std::max(0, gray));
+        // Ensure we're writing valid unsigned bytes
+        output[inputIndex] = static_cast<jbyte>(gray);
+        output[inputIndex + 1] = static_cast<jbyte>(gray);
+        output[inputIndex + 2] = static_cast<jbyte>(gray);
     }
 }
